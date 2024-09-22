@@ -1,0 +1,48 @@
+package {
+    // See: http://go/android-license-faq
+    default_applicable_licenses: ["hardware_google_gfxstream_license"],
+}
+
+cc_library_headers {
+    name: "libgfxstream_guest_rendercontrol_headers",
+    defaults: [
+        "libgfxstream_guest_cc_defaults",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    header_libs: [
+        "libhardware_headers",
+    ],
+    export_header_lib_headers: [
+        "libhardware_headers",
+    ],
+}
+
+cc_library_shared {
+    name: "libgfxstream_guest_rendercontrol",
+    defaults: [
+        "libgfxstream_guest_cc_defaults",
+        "libplatform_virtgpu_defaults",
+    ],
+    header_libs: [
+        "libgfxstream_guest_rendercontrol_headers",
+    ],
+    export_header_lib_headers: [
+        "libgfxstream_guest_rendercontrol_headers",
+    ],
+    shared_libs: [
+        "libOpenglSystemCommon",
+        "liblog",
+    ],
+    srcs: [
+        "RenderControl.cpp",
+    ],
+    target: {
+        host: {
+            cflags: [
+                "-DEND2END_TESTS",
+            ],
+        },
+    },
+}

@@ -1,0 +1,192 @@
+# Interface library
+cc_library(
+    name = "aemu-base-headers",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+    ]),
+    defines = select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//hardware/google/aemu/host-common:aemu-host-common-headers",
+        "@com_google_absl//absl/strings:str_format",
+    ] + select({
+        "@platforms//os:windows": [
+            "//hardware/google/aemu/windows:compat-hdrs",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "aemu-base-metrics",
+    srcs = ["Metrics.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [":aemu-base-headers"],
+)
+
+cc_library(
+    name = "aemu-base-allocator",
+    srcs = ["SubAllocator.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [":aemu-base-headers"],
+)
+
+objc_library(
+    name = "aemu-base-darwin",
+    srcs = [
+        "system-native-mac.mm",
+    ],
+    sdk_frameworks = [
+        "IOkit",
+        "AppKit",
+    ],
+    deps = [":aemu-base-headers"],
+    alwayslink = True,
+)
+
+cc_library(
+    name = "aemu-base",
+    srcs = [
+        "AlignedBuf.cpp",
+        "CLog.cpp",
+        "CompressingStream.cpp",
+        "CpuTime.cpp",
+        "DecompressingStream.cpp",
+        "FileUtils.cpp",
+        "FunctorThread.cpp",
+        "GLObjectCounter.cpp",
+        "GraphicsObjectCounter.cpp",
+        "HealthMonitor.cpp",
+        "LayoutResolver.cpp",
+        "MemStream.cpp",
+        "MemoryTracker.cpp",
+        "MessageChannel.cpp",
+        "PathUtils.cpp",
+        "SharedLibrary.cpp",
+        "StdioStream.cpp",
+        "Stream.cpp",
+        "StreamSerializing.cpp",
+        "StringFormat.cpp",
+        "SubAllocator.cpp",
+        "System.cpp",
+        "Tracing.cpp",
+        "ring_buffer.cpp",
+    ] + select({
+        "@platforms//os:windows": [
+            "SharedMemory_win32.cpp",
+            "Thread_win32.cpp",
+            "Win32UnicodeString.cpp",
+        ],
+        "@platforms//os:macos": [
+            "SharedMemory_posix.cpp",
+            "Thread_pthread.cpp",
+        ],
+        "@platforms//os:linux": [
+            "SharedMemory_posix.cpp",
+            "Thread_pthread.cpp",
+        ],
+    }),
+    defines = [
+        "BUILDING_EMUGL_COMMON_SHARED",
+        "LOGGING_API_SHARED",
+    ] + select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "@platforms//os:linux": [
+            "-ldl",
+            "-lrt",
+        ],
+        "@platforms//os:windows": [
+            "-DEFAULTLIB:Shlwapi.lib",
+        ],
+        "@platforms//os:macos": [
+            "-framework Foundation",
+            "-framework AppKit",
+            "-framework IOKit",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aemu-base-headers",
+        ":aemu-base-metrics",
+        "//external/lz4",
+        "//hardware/google/aemu/host-common:logging",
+    ] + select({
+        "@platforms//os:macos": [
+            ":aemu-base-darwin",
+        ],
+        "@platforms//os:windows": [
+            "//external/qemu/google/compat/windows:compat",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "test-io",
+    srcs = [
+        "testing/file_io.cpp",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":aemu-base",
+        ":aemu-base-headers",
+    ],
+    alwayslink = True,
+)
+
+cc_test(
+    name = "aemu-base_unittests",
+    srcs = [
+        "AlignedBuf_unittest.cpp",
+        "ArraySize_unittest.cpp",
+        "HealthMonitor_unittest.cpp",
+        "HybridEntityManager_unittest.cpp",
+        "LayoutResolver_unittest.cpp",
+        "LruCache_unittest.cpp",
+        "ManagedDescriptor_unittest.cpp",
+        "NoDestructor_unittest.cpp",
+        "Optional_unittest.cpp",
+        "RecurrentTask_unittest.cpp",
+        "StringFormat_unittest.cpp",
+        "SubAllocator_unittest.cpp",
+        "TypeTraits_unittest.cpp",
+        "WorkerThread_unittest.cpp",
+        "ring_buffer_unittest.cpp",
+    ] + select({
+        "@platforms//os:windows": [
+            "Win32UnicodeString_unittest.cpp",
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = [
+        "-undefined error",
+    ],
+    deps = [
+        ":aemu-base",
+        ":aemu-base-headers",
+        "//hardware/generic/goldfish/android/logging:backend",
+        "//hardware/generic/goldfish/android/looper",
+        "//hardware/generic/goldfish/android/sockets",
+        "//hardware/google/aemu/base:aemu-base-metrics",
+        "//hardware/google/aemu/host-common:logging",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

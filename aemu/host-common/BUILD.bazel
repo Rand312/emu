@@ -1,0 +1,187 @@
+# Logging library
+cc_library(
+    name = "logging-qemu2",
+    srcs = [
+        "GfxstreamFatalError.cpp",
+        "logging.cpp",
+    ],
+    hdrs = ["include/host-common/logging.h"],
+    defines = [
+        "BUILDING_EMUGL_COMMON_SHARED",
+    ] + select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = ["include/host-common"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aemu-host-common-headers",
+        "//hardware/google/aemu/base:aemu-base-headers",
+        "//hardware/google/aemu/base:aemu-base-metrics",
+    ],
+)
+
+cc_library(
+    name = "logging",
+    srcs = [
+        "GfxstreamFatalErrorAbsl.cpp",
+        "logging_absl.cpp",
+    ],
+    hdrs = ["include/host-common/logging.h"],
+    defines = [
+        "BUILDING_EMUGL_COMMON_SHARED",
+    ] + select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = ["include/host-common"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aemu-host-common-headers",
+        "//hardware/google/aemu/base:aemu-base-headers",
+        "//hardware/google/aemu/base:aemu-base-metrics",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_library(
+    name = "aemu-host-common-headers",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+    ]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+# Standalone Library (conditional)
+cc_library(
+    name = "aemu-host-common",
+    srcs = [
+        "AndroidPipe.cpp",
+        "DmaMap.cpp",
+        "GoldfishDma.cpp",
+        "GoldfishSyncCommandQueue.cpp",
+        "GraphicsAgentFactory.cpp",
+        "HostmemIdMapping.cpp",
+        "RefcountPipe.cpp",
+        "address_space_device.cpp",
+        "address_space_device_control_ops.cpp",
+        "address_space_graphics.cpp",
+        "address_space_host_media.cpp",
+        "address_space_host_memory_allocator.cpp",
+        "address_space_shared_slots_host_memory_allocator.cpp",
+        "crash_reporter.cpp",
+        "dma_device.cpp",
+        "empty-crash-handler.cpp",
+        "feature_control.cpp",
+        "goldfish_sync.cpp",
+        "hw-config.cpp",
+        "misc.cpp",
+        "sync_device.cpp",
+        "vm_operations.cpp",
+        "window_operations.cpp",
+    ],
+    hdrs = [":aemu-host-common-headers"],
+    copts = [
+        "-Wno-return-type-c-linkage",
+        "-Wno-extern-c-compat",
+    ],
+    defines = [
+        "BUILDING_EMUGL_COMMON_SHARED",
+    ] + select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aemu-host-common-headers",
+        ":logging",
+        "//hardware/google/aemu/base:aemu-base-allocator",
+        "//hardware/google/aemu/base:aemu-base-headers",
+    ],
+    alwayslink = 1,
+)
+
+# Override Library
+cc_library(
+    name = "aemu-host-common-product-feature-override",
+    srcs = ["FeatureControlOverride.cpp"],
+    hdrs = glob(["include/**/*.h"]),
+    defines = [
+        "BUILDING_EMUGL_COMMON_SHARED",
+    ] + select({
+        "@platforms//os:windows": [
+            "WIN32_LEAN_AND_MEAN",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aemu-host-common-headers",
+        "//hardware/google/aemu/base:aemu-base-headers",
+    ],
+)
+
+cc_library(
+    name = "aemu-host-common-testing-support",
+    srcs = [
+        "testing/HostAddressSpace.cpp",
+        "testing/MockAndroidEmulatorWindowAgent.cpp",
+        "testing/MockAndroidMultiDisplayAgent.cpp",
+        "testing/MockAndroidVmOperations.cpp",
+        "testing/MockGraphicsAgentFactory.cpp",
+    ],
+    hdrs = [
+        "testing/HostAddressSpace.h",
+        "testing/MockAndroidEmulatorWindowAgent.h",
+        "testing/MockAndroidVmOperations.h",
+        "testing/MockGraphicsAgentFactory.h",
+    ],
+    includes = ["testing"],
+    deps = [
+        ":aemu-host-common-headers",
+        "//hardware/google/aemu/base:aemu-base-headers",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+# Testing Libraries and Executable (conditional)
+cc_test(
+    name = "aemu-host-logging_unittests",
+    srcs =
+        [
+            # "GfxstreamFatalError_unittest.cpp",
+            # "HostAddressSpace_unittest.cpp",
+            # "HostGoldfishPipe_unittest.cpp",
+            # "HostmemIdMapping_unittest.cpp",
+            # "VmLock_unittest.cpp",
+            "logging_absl_unittest.cpp",
+        ] + glob([
+            "testing/**",
+        ]),
+    includes = ["testing"],
+    deps = [
+        ":aemu-host-common-headers",
+        ":logging",
+        "//hardware/google/aemu:aemu-host-common-test-headers",
+        "//hardware/google/aemu/base:aemu-base",
+        "//hardware/google/aemu/base:aemu-base-allocator",
+        "//hardware/google/aemu/base:aemu-base-headers",
+        "//hardware/google/aemu/host-common:aemu-host-common",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:globals",
+        "@com_google_absl//absl/log:initialize",
+        "@com_google_absl//absl/log:log_sink_registry",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

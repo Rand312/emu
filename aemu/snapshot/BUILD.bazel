@@ -1,0 +1,27 @@
+# Interface library
+cc_library(
+    name = "gfxstream-snapshot-headers",
+    hdrs = glob(["include/**/*.h"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+# Main library
+cc_library(
+    name = "aemu-snapshot",
+    srcs = [
+        "TextureLoader.cpp",
+        "TextureSaver.cpp",
+    ],
+    hdrs = [":gfxstream-snapshot-headers"],
+    copts = [
+        "-D_FILE_OFFSET_BITS=64",
+        "-Wno-extern-c-compat",
+        "-Wno-return-type-c-linkage",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gfxstream-snapshot-headers",
+        "//hardware/google/aemu/base:aemu-base-headers",
+    ],
+)
