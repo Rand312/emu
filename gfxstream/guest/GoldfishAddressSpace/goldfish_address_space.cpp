@@ -315,6 +315,8 @@ int GoldfishAddressSpaceBlock::memoryMap(void *addr,
                                          address_space_handle_t fd,
                                          uint64_t off,
                                          void** dst) {
+    // addr 为 0，内核自己选择一个合适的 vma 区域作为映射区域
+    // 然后将 vma->start 起始地址映射到设备内存偏移 off 的地址上
     void* ptr = ::mmap64(addr, len, PROT_WRITE, MAP_SHARED, fd, off);
     if (MAP_FAILED == ptr) {
         return errno;
